@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Fernbedienung</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121212;
+        }
+        
+        .remote {
+            width: 280px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 30px 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .remote-header {
+            text-align: center;
+            color: #1d1d1f;
+            margin-bottom: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+        
+        .display {
+            background: #f5f5f7;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            color: #1d1d1f;
+            text-align: center;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+            position: relative;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: all 0.3s ease;
+        }
+        
+        .status-indicator.active {
+            background: #30d158;
+            box-shadow: 0 0 10px rgba(48, 209, 88, 0.5);
+        }
+        
+        .controls {
+            display: grid;
+            grid-gap: 15px;
+        }
+        
+        .button {
+            position: relative;
+            padding: 17px;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s cubic-bezier(0.645, 0.045, 0.355, 1);
+            overflow: hidden;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+            opacity: 0.9;
+        }
+        
+        .button.active {
+            background: #007aff;
+            color: white;
+        }
+        
+        .button-2.active {
+            background: #5e5ce6;
+        }
+        
+        .button-3.active {
+            background: #ff2d55;
+        }
+        
+        .button-label {
+            transition: all 0.3s ease;
+            opacity: 0.9;
+        }
+        
+        .button.active .button-label {
+            opacity: 1;
+            font-weight: 600;
+        }
+        
+        .reset-button {
+            margin-top: 25px;
+            background: #8e8e93;
+            color: white;
+            height: 45px;
+            font-size: 15px;
+            border-radius: 12px;
+        }
+        
+        .reset-button:hover {
+            background: #636366;
+        }
+        
+        .reset-button:active {
+            background: #48484a;
+        }
+        
+        @keyframes subtle-scale {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.03);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .button.active {
+            animation: subtle-scale 2s infinite;
+        }
+        
+        /* Reset animation */
+        @keyframes reset-pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(0.95);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .reset-animation {
+            animation: reset-pulse 0.4s;
+        }
+    </style>
+</head>
+<body>
+    <div class="remote">
+        <div class="remote-header">Home Control</div>
+        <div class="display">
+            <div id="statusText">Bereit</div>
+            <div id="statusIndicator" class="status-indicator"></div>
+        </div>
+        <div class="controls">
+            <button id="umitButton" class="button button-1">
+                <span class="button-label">Umit Fenster</span>
+            </button>
+            <button id="oguzhanButton" class="button button-2">
+                <span class="button-label">Oguzhan Fenster</span>
+            </button>
+            <button id="doorButton" class="button button-3">
+                <span class="button-label">Tür</span>
+            </button>
+            <button id="resetButton" class="button reset-button">
+                <span class="button-label">Zurücksetzen</span>
+            </button>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const umitButton = document.getElementById('umitButton');
+    const oguzhanButton = document.getElementById('oguzhanButton');
+    const doorButton = document.getElementById('doorButton');
+    const resetButton = document.getElementById('resetButton');
+    const statusText = document.getElementById('statusText');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const remote = document.querySelector('.remote');
+
+    const deviceIPs = {
+        'Umit Fenster': 'http://192.168.1.101',
+        'Oguzhan Fenster': 'http://192.168.1.102',
+        'Tür': 'http://192.168.1.103'
+    };
+
+    let activeDevice = null;
+
+    function updateStatusDisplay(text, isActive) {
+        statusText.textContent = text;
+        if (isActive) {
+            statusIndicator.classList.add('active');
+        } else {
+            statusIndicator.classList.remove('active');
+        }
+    }
+
+    async function sendCommand(deviceName, command = '/toggle') {
+        const url = deviceIPs[deviceName] + command;
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                console.log(deviceName + " erfolgreich ausgelöst");
+            } else {
+                console.error("Fehler bei " + deviceName);
+            }
+        } catch (error) {
+            console.error("Keine Verbindung zu " + deviceName, error);
+        }
+    }
+
+    function toggleDevice(device, button) {
+        document.querySelectorAll('.button').forEach(btn => {
+            if (!btn.classList.contains('reset-button')) {
+                btn.classList.remove('active');
+            }
+        });
+
+        if (activeDevice === device) {
+            activeDevice = null;
+            updateStatusDisplay('Bereit', false);
+        } else {
+            activeDevice = device;
+            button.classList.add('active');
+            updateStatusDisplay(device, true);
+            sendCommand(device);
+        }
+    }
+
+    umitButton.addEventListener('click', function() {
+        toggleDevice('Umit Fenster', umitButton);
+    });
+
+    oguzhanButton.addEventListener('click', function() {
+        toggleDevice('Oguzhan Fenster', oguzhanButton);
+    });
+
+    doorButton.addEventListener('click', function() {
+        toggleDevice('Tür', doorButton);
+    });
+
+    resetButton.addEventListener('click', async function() {
+        activeDevice = null;
+        document.querySelectorAll('.button').forEach(btn => {
+            if (!btn.classList.contains('reset-button')) {
+                btn.classList.remove('active');
+            }
+        });
+        updateStatusDisplay('Alle zurückgesetzt', false);
+
+        // Alle ESPs resetten
+        await Promise.all([
+            sendCommand('Umit Fenster', '/reset'),
+            sendCommand('Oguzhan Fenster', '/reset'),
+            sendCommand('Tür', '/reset')
+        ]);
+
+        // Reset Animation
+        remote.classList.add('reset-animation');
+        setTimeout(() => {
+            remote.classList.remove('reset-animation');
+            updateStatusDisplay('Bereit', false);
+        }, 800);
+    });
+});
+</script>
+
+</body>
+</html>
