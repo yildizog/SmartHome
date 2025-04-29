@@ -182,7 +182,8 @@
         }
     </style>
 </head>
-<body>
+<body style="display: none;"> <!-- Seite anfangs versteckt -->
+
     <div class="remote">
         <div class="remote-header">Home Control</div>
         <div class="display">
@@ -205,102 +206,88 @@
         </div>
     </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const umitButton = document.getElementById('umitButton');
-    const oguzhanButton = document.getElementById('oguzhanButton');
-    const doorButton = document.getElementById('doorButton');
-    const resetButton = document.getElementById('resetButton');
-    const statusText = document.getElementById('statusText');
-    const statusIndicator = document.getElementById('statusIndicator');
-    const remote = document.querySelector('.remote');
-
-    const deviceIPs = {
-        'Umit Fenster': 'http://192.168.1.101',
-        'Oguzhan Fenster': 'http://192.168.1.102',
-        'Tür': 'http://192.168.1.103'
-    };
-
-    let activeDevice = null;
-
-    function updateStatusDisplay(text, isActive) {
-        statusText.textContent = text;
-        if (isActive) {
-            statusIndicator.classList.add('active');
-        } else {
-            statusIndicator.classList.remove('active');
-        }
-    }
-
-    async function sendCommand(deviceName, command = '/toggle') {
-        const url = deviceIPs[deviceName] + command;
-        try {
-            const response = await fetch(url);
-            if (response.ok) {
-                console.log(deviceName + " erfolgreich ausgelöst");
+    <script>
+        // Passwortabfrage beim Laden der Seite
+        document.addEventListener('DOMContentLoaded', function () {
+            const correctPassword = '1999';
+            let userInput = prompt('Bitte Passwort eingeben:');
+            
+            if (userInput === correctPassword) {
+                document.body.style.display = 'flex'; // Seite anzeigen
             } else {
-                console.error("Fehler bei " + deviceName);
-            }
-        } catch (error) {
-            console.error("Keine Verbindung zu " + deviceName, error);
-        }
-    }
-
-    function toggleDevice(device, button) {
-        document.querySelectorAll('.button').forEach(btn => {
-            if (!btn.classList.contains('reset-button')) {
-                btn.classList.remove('active');
+                document.body.innerHTML = '<h1 style="color: white; text-align: center; padding: 20px;">Zugriff verweigert</h1>';
             }
         });
 
-        if (activeDevice === device) {
+        // Die Button-Interaktionen
+        const umitButton = document.getElementById('umitButton');
+        const oguzhanButton = document.getElementById('oguzhanButton');
+        const doorButton = document.getElementById('doorButton');
+        const resetButton = document.getElementById('resetButton');
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const remote = document.querySelector('.remote');
+        
+        let activeDevice = null;
+        
+        function updateStatusDisplay(text, isActive) {
+            statusText.textContent = text;
+            if (isActive) {
+                statusIndicator.classList.add('active');
+            } else {
+                statusIndicator.classList.remove('active');
+            }
+        }
+        
+        function toggleDevice(device, button) {
+            // Reset previous active button
+            document.querySelectorAll('.button').forEach(btn => {
+                if (!btn.classList.contains('reset-button')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            if (activeDevice === device) {
+                // Toggle off
+                activeDevice = null;
+                updateStatusDisplay('Bereit', false);
+            } else {
+                // Toggle on
+                activeDevice = device;
+                button.classList.add('active');
+                updateStatusDisplay(device, true);
+            }
+        }
+        
+        umitButton.addEventListener('click', function() {
+            toggleDevice('Umit Fenster', umitButton);
+        });
+        
+        oguzhanButton.addEventListener('click', function() {
+            toggleDevice('Oguzhan Fenster', oguzhanButton);
+        });
+        
+        doorButton.addEventListener('click', function() {
+            toggleDevice('Tür', doorButton);
+        });
+        
+        resetButton.addEventListener('click', function() {
+            // Zurücksetzen aller Geräte
             activeDevice = null;
-            updateStatusDisplay('Bereit', false);
-        } else {
-            activeDevice = device;
-            button.classList.add('active');
-            updateStatusDisplay(device, true);
-            sendCommand(device);
-        }
-    }
-
-    umitButton.addEventListener('click', function() {
-        toggleDevice('Umit Fenster', umitButton);
-    });
-
-    oguzhanButton.addEventListener('click', function() {
-        toggleDevice('Oguzhan Fenster', oguzhanButton);
-    });
-
-    doorButton.addEventListener('click', function() {
-        toggleDevice('Tür', doorButton);
-    });
-
-    resetButton.addEventListener('click', async function() {
-        activeDevice = null;
-        document.querySelectorAll('.button').forEach(btn => {
-            if (!btn.classList.contains('reset-button')) {
-                btn.classList.remove('active');
-            }
+            document.querySelectorAll('.button').forEach(btn => {
+                if (!btn.classList.contains('reset-button')) {
+                    btn.classList.remove('active');
+                }
+            });
+            updateStatusDisplay('Alle zurückgesetzt', false);
+            
+            // Animations-Effekt für Reset
+            remote.classList.add('reset-animation');
+            setTimeout(() => {
+                remote.classList.remove('reset-animation');
+                updateStatusDisplay('Bereit', false);
+            }, 800);
         });
-        updateStatusDisplay('Alle zurückgesetzt', false);
-
-        // Alle ESPs resetten
-        await Promise.all([
-            sendCommand('Umit Fenster', '/reset'),
-            sendCommand('Oguzhan Fenster', '/reset'),
-            sendCommand('Tür', '/reset')
-        ]);
-
-        // Reset Animation
-        remote.classList.add('reset-animation');
-        setTimeout(() => {
-            remote.classList.remove('reset-animation');
-            updateStatusDisplay('Bereit', false);
-        }, 800);
-    });
-});
-</script>
-
+    </script>
 </body>
 </html>
